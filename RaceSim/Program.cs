@@ -8,12 +8,14 @@ namespace ConsoleView
         {
             Data.Initialize();
             Data.NextRace();
+            Visualisation.Initialize();
 
             Console.WriteLine(Data.CurrentRace.Track.Name);
 
             for (;;)
             {
                 Thread.Sleep(100);
+                Visualisation.DrawTrack(Data.CurrentRace.Track, Data.CurrentRace);
             }
         }
     }

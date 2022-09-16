@@ -17,9 +17,9 @@ namespace Model
             Tracks = new();
         }
 
-        public Track NextTrack()
+        public Track? NextTrack()
         {
-            return Tracks.Dequeue();
+            return Tracks.Count > 0 ? Tracks.Dequeue() : null;
         }
     }
 }

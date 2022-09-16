@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Controller\Controller.csproj" />
+    <ProjectReference Include="..\RaceSim\ConsoleView.csproj" />
   </ItemGroup>
 
 </Project>

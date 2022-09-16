@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Model
 {
-    public enum ESectionType
+    public enum SectionType
     {
         Straight,
         LeftCorner,
@@ -15,19 +16,21 @@ namespace Model
         Finish
     }
 
+    [DebuggerDisplay("L{Left}R{Right}, P{DistanceLeft}.{DistanceRight}")]
     public class SectionData
     {
         public IParticipant Left { get; set; }
-        public IParticipant Light { get; set; }
+        public IParticipant Right { get; set; }
         public int DistanceLeft { get; set; }
         public int DistanceRight { get; set; }
     }
 
+    [DebuggerDisplay("{SectionType}")]
     public class Section
     {
-        public ESectionType SectionType { get; set; }
+        public SectionType SectionType { get; set; }
 
-        public Section(ESectionType sectionType)
+        public Section(SectionType sectionType)
         {
             SectionType = sectionType;
         }
