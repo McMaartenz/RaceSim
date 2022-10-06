@@ -12,6 +12,11 @@ namespace Model
         public int Performance { get; set; }
         public int Speed { get; set; }
         public bool IsBroken { get; set; }
+
+        public int GetSpeed()
+        {
+            return (int)((Quality/100.0) * (Performance/100.0) * (Speed/100.0) * 20.0);
+        }
     }
 
     public class Skates : IEquipment

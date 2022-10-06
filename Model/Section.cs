@@ -28,6 +28,8 @@ namespace Model
     [DebuggerDisplay("{SectionType}")]
     public class Section
     {
+        public const int sectionLength = 100;
+
         public SectionType SectionType { get; set; }
 
         public Section(SectionType sectionType)

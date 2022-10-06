@@ -22,6 +22,8 @@ namespace ConsoleView
 
     public static class Visualisation
     {
+        static object drawingLock = new();
+
         static string straight_h;
         static string straight_v;
 
@@ -112,6 +114,9 @@ namespace ConsoleView
                 "───────╯\n";
 
             #endregion
+
+            //TODO: next track redo event subscription
+            Data.CurrentRace.DriversChanged += Track_DriversChanged;
         }
 
         public static bool IsHorizontal(Orientation dir)
@@ -153,87 +158,95 @@ namespace ConsoleView
             dData = dData.Replace('2', sData.Right?.Name[0] ?? ' ');
         }
 
+        public static void Track_DriversChanged(object sender, DriversChangedEventArgs e)
+        {
+            DrawTrack(e.track, Data.CurrentRace);
+        }
+
         public static void DrawTrack(Track track, Race race)
         {
             Point point = new(1, 1);
             Orientation dir = EAST;
 
-            Console.BackgroundColor = ConsoleColor.DarkCyan;
-            Console.ForegroundColor = ConsoleColor.White;
-            foreach (Section section in track.Sections)
+            lock (drawingLock)
             {
-                SectionType type = section.SectionType;
-                SectionData data = race.GetSectionData(section);
-                string drawingData = "Error";
-
-                int x = dir == EAST ? 1 : (dir == WEST ? -1 : 0);
-                int y = dir == SOUTH ? 1 : (dir == NORTH ? -1 : 0);
-
-                point.Offset(x, y);
-
-                switch (type)
+                Console.BackgroundColor = ConsoleColor.DarkCyan;
+                Console.ForegroundColor = ConsoleColor.White;
+                foreach (Section section in track.Sections)
                 {
-                    case Finish:
-                    {
-                        drawingData = IsHorizontal(dir) ? finish_h : finish_v;
-                        break;
-                    }
+                    SectionType type = section.SectionType;
+                    SectionData data = race.GetSectionData(section);
+                    string drawingData = "Error";
 
-                    case StartGrid:
-                    {
-                        drawingData = IsHorizontal(dir) ? startgrid_h : startgrid_v;
-                        break;
-                    }
-                    
-                    case Straight:
-                    {
-                        drawingData = IsHorizontal(dir) ? straight_h : straight_v;
-                        break;
-                    }
+                    int x = dir == EAST  ? 1 : (dir == WEST  ? -1 : 0);
+                    int y = dir == SOUTH ? 1 : (dir == NORTH ? -1 : 0);
 
-                    case LeftCorner:
+                    point.Offset(x, y);
+
+                    switch (type)
                     {
-                        Dictionary<Orientation, (Orientation, string)> orientationMappings = new()
+                        case Finish:
                         {
-                            { NORTH, (WEST, corner_SW) },
-                            { WEST, (SOUTH, corner_SE) },
-                            { SOUTH, (EAST, corner_NE) },
-                            { EAST, (NORTH, corner_NW) },
-                        };
+                            drawingData = IsHorizontal(dir) ? finish_h : finish_v;
+                            break;
+                        }
 
-                        var result = orientationMappings[dir];
-
-                        dir = result.Item1;
-                        drawingData = result.Item2;
-                        break;
-                    }
-
-                    case RightCorner:
-                    {
-                        Dictionary<Orientation, (Orientation, string)> orientationMappings = new()
+                        case StartGrid:
                         {
-                            { NORTH, (EAST, corner_SE) },
-                            { EAST, (SOUTH, corner_SW) },
-                            { SOUTH, (WEST, corner_NW) },
-                            { WEST, (NORTH, corner_NE) },
-                        };
+                            drawingData = IsHorizontal(dir) ? startgrid_h : startgrid_v;
+                            break;
+                        }
 
-                        var result = orientationMappings[dir];
+                        case Straight:
+                        {
+                            drawingData = IsHorizontal(dir) ? straight_h : straight_v;
+                            break;
+                        }
 
-                        dir = result.Item1;
-                        drawingData = result.Item2;
-                        break;
+                        case LeftCorner:
+                        {
+                            Dictionary<Orientation, (Orientation, string)> orientationMappings = new()
+                            {
+                                { NORTH, (WEST, corner_SW) },
+                                { WEST, (SOUTH, corner_SE) },
+                                { SOUTH, (EAST, corner_NE) },
+                                { EAST, (NORTH, corner_NW) },
+                            };
+
+                            var result = orientationMappings[dir];
+
+                            dir = result.Item1;
+                            drawingData = result.Item2;
+                            break;
+                        }
+
+                        case RightCorner:
+                        {
+                            Dictionary<Orientation, (Orientation, string)> orientationMappings = new()
+                            {
+                                { NORTH, (EAST, corner_SE) },
+                                { EAST, (SOUTH, corner_SW) },
+                                { SOUTH, (WEST, corner_NW) },
+                                { WEST, (NORTH, corner_NE) },
+                            };
+
+                            var result = orientationMappings[dir];
+
+                            dir = result.Item1;
+                            drawingData = result.Item2;
+                            break;
+                        }
+
+                        default:
+                        {
+                            break;
+                        }
                     }
 
-                    default:
-                    {
-                        break;
-                    }
+                    Point finalPos = new(point.X * 8, point.Y * 5);
+                    FillParticipants(ref drawingData, data);
+                    PrintAt(finalPos, drawingData);
                 }
-
-                Point finalPos = new(point.X * 8, point.Y * 5);
-                FillParticipants(ref drawingData, data);
-                PrintAt(finalPos, drawingData);
             }
         }
     }
