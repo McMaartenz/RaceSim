@@ -23,7 +23,7 @@ namespace ControllerTest
         public void NextTrack_EmptyQueue_ReturnNull()
         {
             Track? result = _competition.NextTrack();
-            Assert.IsNull(result);
+            Assert.That(result, Is.Null);
         }
 
         [Test]
@@ -33,7 +33,7 @@ namespace ControllerTest
             _competition.Tracks.Enqueue(newTrack);
 
             Track? result = _competition.NextTrack();
-            Assert.IsNotNull(result);
+            Assert.That(result, Is.Not.Null);
         }
 
         [Test]
@@ -45,9 +45,11 @@ namespace ControllerTest
 
             Track? resultA = _competition.NextTrack();
             Track? resultB = _competition.NextTrack();
-
-            Assert.IsNotNull(resultA);
-            Assert.IsNull(resultB);
+            Assert.Multiple(() =>
+            {
+                Assert.That(resultA, Is.Not.Null);
+                Assert.That(resultB, Is.Null);
+            });
         }
 
         [Test]
@@ -62,11 +64,14 @@ namespace ControllerTest
             Track? resultA = _competition.NextTrack();
             Track? resultB = _competition.NextTrack();
 
-            Assert.IsNotNull(resultA);
-            Assert.IsNotNull(resultB);
+            Assert.Multiple(() =>
+            {
+                Assert.That(resultA, Is.Not.Null);
+                Assert.That(resultB, Is.Not.Null);
 
-            Assert.AreEqual(resultA.Name, "A");
-            Assert.AreEqual(resultB.Name, "B");
+                Assert.That(resultA.Name, Is.EqualTo("A"));
+                Assert.That(resultB.Name, Is.EqualTo("B"));
+            });
         }
     }
 }

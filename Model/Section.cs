@@ -16,7 +16,7 @@ namespace Model
         Finish
     }
 
-    [DebuggerDisplay("L{Left}R{Right}, P{DistanceLeft}.{DistanceRight}")]
+    [DebuggerDisplay("L{Left?.ToString()??\" \"}R{Right?.ToString()??\" \"}, P{DistanceLeft}.{DistanceRight}")]
     public class SectionData
     {
         public IParticipant Left { get; set; }

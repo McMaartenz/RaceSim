@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,15 +14,18 @@ namespace Controller
 {
     public static class Data
     {
+        public delegate void RaceChangedEventHandler(object? sender, RaceChangedEventArgs e);
+        public static event RaceChangedEventHandler RaceChanged;
+
         public static Competition Competition { get; set; }
         public static Race CurrentRace { get; set; }
         
         public static void GenerateParticipants()
         {
             List<IParticipant> participants = new();
-            participants.Add(new Skater("Jan", 0, new Skates(100, 100, 100, false), TeamColor.Red));
-            participants.Add(new Skater("Sam", 0, new Skates(200, 50, 100, false), TeamColor.Blue));
-            participants.Add(new Skater("Sem", 0, new Skates(50, 125, 200, false), TeamColor.Grey));
+            participants.Add(new Skater("Alpha", 0, new Skates(100, 100, 100, false), TeamColor.Red));
+            participants.Add(new Skater("Bravo", 0, new Skates(200, 50, 100, false), TeamColor.Blue));
+            participants.Add(new Skater("Charlie", 0, new Skates(50, 125, 200, false), TeamColor.Grey));
 
             Competition.Participants = participants;
         }
@@ -82,8 +86,12 @@ namespace Controller
             Track? nextTrack = Competition.NextTrack();
             if (nextTrack is not null)
             {
+                CurrentRace?.RemoveEvents();
                 CurrentRace = new(nextTrack, Competition.Participants);
                 CurrentRace.SetStartingPositions();
+
+                // send current race changed event
+                RaceChanged?.Invoke(default, new(CurrentRace));
             }
         }
     }

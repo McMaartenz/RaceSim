@@ -20,7 +20,7 @@ namespace ControllerTest
 
             var queue = Track.ConvertToSections(sectionTypes);
 
-            Assert.AreEqual(queue.Count, sectionTypes.Length);
+            Assert.That(sectionTypes, Has.Length.EqualTo(queue.Count));
         }
 
         [Test]
@@ -33,7 +33,7 @@ namespace ControllerTest
             int i = 0;
             foreach (var section in sections)
             {
-                Assert.AreEqual(section.SectionType, sectionTypes[i++]);
+                Assert.That(sectionTypes[i++], Is.EqualTo(section.SectionType));
             }
         }
     }

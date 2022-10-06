@@ -107,16 +107,23 @@ namespace ConsoleView
                 "╰───────\n";
 
             corner_NW =
-                "╯1     │\n" +
-                "       │\n" +
+                "╯      │\n" +
+                " 1     │\n" +
                 "       │\n" +
                 "     2 │\n" +
                 "───────╯\n";
 
             #endregion
 
-            //TODO: next track redo event subscription
-            Data.CurrentRace.DriversChanged += Track_DriversChanged;
+            Data.RaceChanged += Track_RaceChanged;
+        }
+
+        private static void Track_RaceChanged(object? sender, RaceChangedEventArgs e)
+        {
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.Clear();
+
+            e.race.DriversChanged += Track_DriversChanged;
         }
 
         public static bool IsHorizontal(Orientation dir)
@@ -152,10 +159,21 @@ namespace ConsoleView
             }
         }
 
-        private static void FillParticipants(ref string dData, SectionData sData)
+        private static void FillParticipants(ref string dData, SectionData sData, bool mirror)
         {
-            dData = dData.Replace('1', sData.Left?.Name[0] ?? ' ');
-            dData = dData.Replace('2', sData.Right?.Name[0] ?? ' ');
+            string left  = "1";
+            string right = "2";
+
+            if (mirror)
+            {
+                (left, right) = (right, left);
+            }
+            
+            string left_name  = sData.Left  == null ? " " : (sData.Left.Equipment.IsBroken  ? "░" : sData.Left.Name[0].ToString());
+            string right_name = sData.Right == null ? " " : (sData.Right.Equipment.IsBroken ? "░" : sData.Right.Name[0].ToString());
+
+            dData = dData.Replace(left, left_name);
+            dData = dData.Replace(right, right_name);
         }
 
         public static void Track_DriversChanged(object sender, DriversChangedEventArgs e)
@@ -167,6 +185,7 @@ namespace ConsoleView
         {
             Point point = new(1, 1);
             Orientation dir = EAST;
+            bool shouldMirror;
 
             lock (drawingLock)
             {
@@ -177,6 +196,7 @@ namespace ConsoleView
                     SectionType type = section.SectionType;
                     SectionData data = race.GetSectionData(section);
                     string drawingData = "Error";
+                    shouldMirror = false;
 
                     int x = dir == EAST  ? 1 : (dir == WEST  ? -1 : 0);
                     int y = dir == SOUTH ? 1 : (dir == NORTH ? -1 : 0);
@@ -200,6 +220,10 @@ namespace ConsoleView
                         case Straight:
                         {
                             drawingData = IsHorizontal(dir) ? straight_h : straight_v;
+                            if (dir == WEST || dir == NORTH)
+                            {
+                                shouldMirror = true;
+                            }
                             break;
                         }
 
@@ -244,7 +268,7 @@ namespace ConsoleView
                     }
 
                     Point finalPos = new(point.X * 8, point.Y * 5);
-                    FillParticipants(ref drawingData, data);
+                    FillParticipants(ref drawingData, data, shouldMirror);
                     PrintAt(finalPos, drawingData);
                 }
             }

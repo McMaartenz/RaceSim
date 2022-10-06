@@ -37,10 +37,12 @@ namespace ControllerTest
         public void GetStartPositions_ReturnSections()
         {
             Section[] startingPositions = race.GetStartPositions();
-
-            Assert.AreEqual(startingPositions[0], track.Sections.First.Next.Value);
-            Assert.AreEqual(startingPositions[1], track.Sections.First.Next.Next.Value);
-            Assert.That(startingPositions.Length == 2);
+            Assert.Multiple(() =>
+            {
+                Assert.That(track.Sections.First.Next.Value,      Is.EqualTo(startingPositions[0]));
+                Assert.That(track.Sections.First.Next.Next.Value, Is.EqualTo(startingPositions[1]));
+                Assert.That(startingPositions, Has.Length.EqualTo(2));
+            });
         }
     }
 }

@@ -15,13 +15,13 @@ namespace ControllerTest
         [Test]
         public void IsHorizontal_OrientationSouth_ReturnFalse()
         {
-            Assert.IsFalse(Visualisation.IsHorizontal(Orientation.SOUTH));
+            Assert.That(Visualisation.IsHorizontal(Orientation.SOUTH), Is.False);
         }
 
         [Test]
         public void IsHorizontal_OrientationWest_ReturnTrue()
         {
-            Assert.IsTrue(Visualisation.IsHorizontal(Orientation.WEST));
+            Assert.That(Visualisation.IsHorizontal(Orientation.WEST), Is.True);
         }
     }
 }

@@ -7,8 +7,8 @@ namespace ConsoleView
         public static void Main()
         {
             Data.Initialize();
-            Data.NextRace();
             Visualisation.Initialize();
+            Data.NextRace();
 
             Console.CursorVisible = false;
 

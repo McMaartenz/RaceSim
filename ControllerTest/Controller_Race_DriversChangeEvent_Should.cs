@@ -15,18 +15,36 @@ namespace ControllerTest
     {
         private static Track track;
         private static Race race;
+        private static Skater skaterA;
+        private static Skater skaterB;
 
         [SetUp]
         public void Setup()
         {
-            track = new("Test track", new SectionType[] { Straight, StartGrid, StartGrid });
+            SectionType[] zwolleSections =
+            {
+                StartGrid, // 0 0
+                StartGrid, // 1 0
+                Finish, // 2 0
+                RightCorner, // 3 0
+                Straight, // 3 1
+                RightCorner, // 3 2
+                Straight, // 2 2
+                Straight, // 1 2
+                Straight, // 0 2
+                RightCorner, // -1 2
+                Straight, // -1 1
+                RightCorner, // -1 0
+            };
+
+            track = new("Test", zwolleSections);
 
             IEquipment fastEquipment = new Skates(100, 100, 100, false);
             IEquipment slowEquipment = new Skates(1, 1, 1, false);
-            IEquipment immovableEquipment = new Skates(0, 0, 0, false);
 
-            Skater skaterA = new("A", 0, fastEquipment, default);
-            Skater skaterB = new("B", 0, slowEquipment, default);
+            skaterA = new("A", 0, fastEquipment, default);
+            skaterB = new("B", 0, slowEquipment, default);
+            IEquipment immovableEquipment = new Skates(0, 0, 0, false);
 
             race = new(track, new List<IParticipant> { new Skater("C", 0, immovableEquipment, default), skaterA, skaterB });
 
@@ -47,6 +65,7 @@ namespace ControllerTest
                 race.OnTimedEvent(this, new());
             }
 
+            Assert.That(race.GetSectionData(track.Sections.First.Next.Next.Value).Right, Is.EqualTo(skaterA));
         }
     }
 }
