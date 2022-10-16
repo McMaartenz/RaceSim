@@ -161,16 +161,16 @@ namespace ConsoleView
 
         private static void FillParticipants(ref string dData, SectionData sData, bool mirror)
         {
-            string left  = "1";
-            string right = "2";
+            char left  = '1';
+            char right = '2';
 
             if (mirror)
             {
                 (left, right) = (right, left);
             }
             
-            string left_name  = sData.Left  == null ? " " : (sData.Left.Equipment.IsBroken  ? "░" : sData.Left.Name[0].ToString());
-            string right_name = sData.Right == null ? " " : (sData.Right.Equipment.IsBroken ? "░" : sData.Right.Name[0].ToString());
+            char left_name  = sData.Left  == null ? ' ' : (sData.Left.Equipment.IsBroken  ? '@' : sData.Left.Name[0]);
+            char right_name = sData.Right == null ? ' ' : (sData.Right.Equipment.IsBroken ? '@' : sData.Right.Name[0]);
 
             dData = dData.Replace(left, left_name);
             dData = dData.Replace(right, right_name);
