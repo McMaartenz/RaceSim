@@ -17,11 +17,12 @@ namespace Grafische
 {
     using static Visualisation.Orientation;
     using static Model.SectionType;
-    using Color = System.Drawing.Color;
 
     public static class ImageManager
     {
-        public const int IMAGE_SIZE = 128;//128;
+        public const int IMAGE_SIZE = 128;
+        public const int HALF_IMAGE = 64;
+        public const int SKATER_SIZE = 48;
 
         public static int trackWidth;
         public static int trackHeight;

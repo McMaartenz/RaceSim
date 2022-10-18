@@ -49,8 +49,6 @@ namespace Grafische
                 BitmapImage src = ImageManager.ToBitmapImage(Visualisation.DrawTrack(e.track, Data.CurrentRace));
                 trackImage.Source = src;
             });
-
-            Console.WriteLine("Updated track in wpf");
         }
 
         private void RenderThread(Action action)

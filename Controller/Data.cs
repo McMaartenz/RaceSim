@@ -22,10 +22,10 @@ namespace Controller
         
         public static void GenerateParticipants()
         {
-            List<IParticipant> participants = new();
-            participants.Add(new Skater("Alpha", 0, new Skates(100, 100, 100, false), TeamColor.Red));
-            participants.Add(new Skater("Bravo", 0, new Skates(200, 50, 100, false), TeamColor.Blue));
-            participants.Add(new Skater("Charlie", 0, new Skates(50, 125, 200, false), TeamColor.Grey));
+            List<IParticipant> participants = new(); // TODO: change speed to 100
+            participants.Add(new Skater("Alpha", 0, new Skates(200, 125, 5, false), TeamColor.Red));
+            participants.Add(new Skater("Bravo", 0, new Skates(200, 125, 5, false), TeamColor.Blue));
+            participants.Add(new Skater("Charlie", 0, new Skates(200, 125, 5, false), TeamColor.Grey));
 
             Competition.Participants = participants;
         }

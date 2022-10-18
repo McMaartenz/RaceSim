@@ -35,7 +35,7 @@ namespace Controller
         {
             Track = track;
             Participants = participants;
-            timer = new(500); //TODO make 500
+            timer = new(33); //TODO make 500
             timer.Elapsed += OnTimedEvent;
 
             Rounds = new(participants.Count);
