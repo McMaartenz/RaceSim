@@ -67,6 +67,7 @@ namespace Grafische
                 catch (Exception e)
                 {
                     MessageBox.Show($"File {textureName} is not found: {e}", "Missing data file", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Console.WriteLine($"[BitmapLoader] Texture {textureName} is missing");
                     throw new Exception($"Missing file {textureName} because of {e}");
                 }
             }
@@ -108,7 +109,7 @@ namespace Grafische
                 maxY = Math.Max(y, maxY);
                 minX = Math.Min(y, minY);
 
-                Console.WriteLine($"current piece point {el.section.SectionType}: {el.dir},({x},{y})");
+                Console.WriteLine($"[TrackIterator] ({x},{y}): facing {el.dir}: type is {el.section.SectionType}");
             }
 
             return (Math.Abs(maxX - minX) + 1, Math.Abs(maxY - minY) + 1);

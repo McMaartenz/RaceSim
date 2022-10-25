@@ -2,6 +2,7 @@
 using Model;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
 using System.Linq;
@@ -26,14 +27,24 @@ namespace Grafische
     /// </summary>
     public partial class MainWindow : Window
     {
+        public delegate void WPFApplicationExit(object? sender, EventArgs e);
+        public static event WPFApplicationExit WPFExit;
+
+        public delegate void ToggleConsoleView(object? sender, EventArgs e);
+        public static event ToggleConsoleView ToggleConsole;
+
+        private SchermA? schermA;
+        private SchermB? schermB;
 
         public MainWindow(ref bool done)
         {
             InitializeComponent();
+            Closing += (sender, e) => WPFExit(sender, e);
 
             Data.RaceChanged += Track_RaceChanged;
             done = true;
         }
+
         private void Track_RaceChanged(object? sender, RaceChangedEventArgs e)
         {
             Console.WriteLine("Track has changed");
@@ -61,6 +72,42 @@ namespace Grafische
                 DispatcherPriority.Render,
                 action
             );
+        }
+
+        // Send events to Program Console
+        private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
+        {
+            WPFExit?.Invoke(sender, e);
+            Application.Current.Shutdown();
+        }
+        
+        private void Toggle_Console_View(object sender, RoutedEventArgs e)
+        {
+            ToggleConsole?.Invoke(sender, e);
+        }
+
+        private void SchermA_Open_Click(object sender, RoutedEventArgs e)
+        {
+            if (schermA is not null)
+            {
+                schermA.Activate();
+                return;
+            }
+
+            schermA = new();
+            schermA.Show();
+        }
+
+        private void SchermB_Open_Click(object sender, RoutedEventArgs e)
+        {
+            if (schermB is not null)
+            {
+                schermB.Activate();
+                return;
+            }
+
+            schermB = new();
+            schermB.Show();
         }
     }
 }
