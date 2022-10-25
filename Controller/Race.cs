@@ -35,7 +35,7 @@ namespace Controller
         {
             Track = track;
             Participants = participants;
-            timer = new(33); //TODO make 500
+            timer = new(34); //TODO make 500
             timer.Elapsed += OnTimedEvent;
 
             Rounds = new(participants.Count);
@@ -70,7 +70,7 @@ namespace Controller
                 IEquipment equipment = participant.Equipment;
                 if (equipment.IsBroken)
                 {
-                    int repairChance = 6;
+                    int repairChance = 200;
 
                     if (rng.Next(repairChance) == 0)
                     {
@@ -79,7 +79,7 @@ namespace Controller
                 }
                 else
                 {
-                    int breakingChance = 30 + (equipment.Quality / 100) * 2;
+                    int breakingChance = 30 + (equipment.Quality / 100) * 600;
 
                     if (rng.Next(breakingChance) == 0)
                     {
@@ -125,6 +125,10 @@ namespace Controller
                                 }
                             }
                         }
+                        else
+                        {
+                            sData.DistanceLeft = Section.sectionLength;
+                        }
                     }
                 }
 
@@ -160,6 +164,10 @@ namespace Controller
                                     Rounds.Add(participant, 0);
                                 }
                             }
+                        }
+                        else
+                        {
+                            sData.DistanceRight = Section.sectionLength;
                         }
                     }
                 }

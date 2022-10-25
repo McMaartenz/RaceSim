@@ -2,6 +2,7 @@
 using Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -12,8 +13,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Windows.Markup;
 
 namespace Grafische
 {
@@ -22,6 +21,78 @@ namespace Grafische
 
     public static class Visualisation
     {
+        public class TrackIterator
+        {
+            Track track;
+            Race race;
+
+            public TrackIterator(Track track, Race race)
+            {
+                this.track = track;
+                this.race = race;
+            }
+
+            public IEnumerable<TrackIteration> Iterator()
+            {
+                Point point = Point.Empty;
+                Orientation dir = EAST;
+                bool shouldMirror;
+
+                foreach (Section section in track.Sections)
+                {
+                    SectionType type = section.SectionType;
+                    SectionData data = race.GetSectionData(section);
+                    shouldMirror = false;
+
+                    int x = dir == EAST  ? 1 : (dir == WEST  ? -1 : 0);
+                    int y = dir == SOUTH ? 1 : (dir == NORTH ? -1 : 0);
+
+                    point.Offset(x, y);
+                    switch (section.SectionType)
+                    {
+                        case LeftCorner:
+                        {
+                            dir = dir switch
+                            {
+                                NORTH => WEST,
+                                WEST  => SOUTH,
+                                SOUTH => EAST,
+                                EAST  => NORTH
+                            };
+                            break;
+                        }
+
+                        case RightCorner:
+                        {
+                            dir = dir switch
+                            {
+                                NORTH => EAST,
+                                EAST  => SOUTH,
+                                SOUTH => WEST,
+                                WEST  => NORTH
+                            };
+                            break;
+                        }
+
+                        case Straight:
+                        {
+                            if (dir == WEST || dir == NORTH)
+                            {
+                                shouldMirror = true;
+                            }
+                            break;
+                        }
+
+                        default: break;
+                    }
+
+                    yield return new TrackIteration(section, type, data, point, dir, shouldMirror);
+                }
+            }
+
+            public record TrackIteration(Section section, SectionType type, SectionData data, Point point, Orientation dir, bool shouldMirror) { }
+        }
+
         private record PlayerRenderer(Point sectionPos, Section section, SectionData data, Orientation dir, bool mirror) { }
 
         public static object drawingLock = new();
@@ -57,252 +128,157 @@ namespace Grafische
             return dir == WEST || dir == EAST;
         }
 
-        public static Bitmap DrawTrack(Track track, Race race)
+        public static Bitmap DrawEmptyTrack(Track track, Race race)
         {
-
-            (int w, int h) = ImageManager.CalculateTrackPixelDimensions(Controller.Data.CurrentRace.Track);
-
-            ImageManager.trackWidth = w;
-            ImageManager.trackHeight = h;
-
             Bitmap bitmap = (Bitmap)ImageManager.GetBitmapData("empty").Clone();
             Graphics g = Graphics.FromImage(bitmap);
-            
-            Point point = new(0, 0);
-            Orientation dir = EAST;
-            bool shouldMirror;
 
+            TrackIterator iter = new(track, race);
+            foreach (var el in iter.Iterator())
+            {
+                Bitmap? imageData = null;
+                string imagePath = "";
+
+                imagePath = el.type switch
+                {
+                    Finish     => IsHorizontal(el.dir) ? finish_h    : finish_v,
+                    StartGrid  => IsHorizontal(el.dir) ? startgrid_h : startgrid_v,
+                    Straight   => IsHorizontal(el.dir) ? straight_h  : straight_v,
+                    LeftCorner => el.dir switch
+                    {
+                        NORTH => corner_NW,
+                        EAST  => corner_NE,
+                        SOUTH => corner_SE,
+                        WEST  => corner_SW
+                    },
+                    RightCorner => el.dir switch
+                    {
+                        NORTH => corner_NE,
+                        EAST  => corner_SE,
+                        SOUTH => corner_SW,
+                        WEST  => corner_NW
+                    }
+                };
+
+                imageData = ImageManager.GetBitmapData(imagePath);
+
+                Point calculatedPosition = new(x: el.point.X * ImageManager.IMAGE_SIZE,
+                                               y: el.point.Y * ImageManager.IMAGE_SIZE);
+
+                g.DrawImage(imageData, calculatedPosition);
+            }
+
+            return bitmap;
+        }
+
+        private static (int x, int y) ComputePositionForInfo(PlayerRenderer renderInfo, bool leftSide)
+        {
+            int x = renderInfo.sectionPos.X * ImageManager.IMAGE_SIZE,
+                y = renderInfo.sectionPos.Y * ImageManager.IMAGE_SIZE;
+
+            int dist = leftSide ? renderInfo.data.DistanceLeft : renderInfo.data.DistanceRight;
+            dist = (int)(dist / 100.0 * ImageManager.IMAGE_SIZE) - ImageManager.HALF_SKATER;
+
+            switch (renderInfo.section.SectionType)
+            {
+                case Straight:
+                case StartGrid:
+                case Finish:
+                {
+                    if (IsHorizontal(renderInfo.dir))
+                    {
+                        x += renderInfo.mirror ? ImageManager.IMAGE_SIZE - dist: dist;
+                        if (leftSide == renderInfo.mirror)
+                        {
+                            y += ImageManager.HALF_IMAGE;
+                        }
+                    }
+                    else
+                    {
+                        y += renderInfo.mirror ? ImageManager.IMAGE_SIZE - dist: dist;
+                        if (leftSide != renderInfo.mirror)
+                        {
+                            x += ImageManager.HALF_IMAGE;
+                        }
+                    }
+                    break;
+                }
+
+                case LeftCorner:
+                case RightCorner:
+                {
+                    bool leftCorner = renderInfo.section.SectionType == LeftCorner;
+
+                    double angleDeg = dist / (double)ImageManager.IMAGE_SIZE * 90.0;
+                    if (leftCorner)
+                    {
+                        angleDeg = 90 - angleDeg;
+                    }
+                    angleDeg = angleDeg + (double)renderInfo.dir - (leftCorner ? 270 : 180);
+
+                    double angleRad = ImageManager.ToRadians(angleDeg);
+                    double radius = leftSide != leftCorner ? 100 : 20;
+
+                    var dir = renderInfo.dir;
+                    if (dir == EAST || (dir == SOUTH && leftCorner) || (dir == NORTH && !leftCorner))
+                    {
+                        x += ImageManager.IMAGE_SIZE;
+                    }
+
+                    if (dir == SOUTH || (dir == WEST && leftCorner) || (dir == EAST && !leftCorner))
+                    {
+                        y += ImageManager.IMAGE_SIZE;
+                    }
+
+                    x += (int)(Math.Sin(angleRad) * radius)      - ImageManager.HALF_SKATER;
+                    y += (int)(Math.Cos(angleRad) * radius) * -1 - ImageManager.HALF_SKATER;
+
+                    break;
+                }
+            }
+            return (x, y);
+        }
+
+        public static Bitmap DrawTrack(Track track, Race race)
+        {
+            Bitmap bitmap = (Bitmap)ImageManager.GetEmptyTrackBitmap(track, race).Clone();
+            Graphics g = Graphics.FromImage(bitmap);
+            
             Queue<PlayerRenderer> renderQueue = new();
+
+            TrackIterator iter = new(track, race);
+            foreach (var el in iter.Iterator())
+            {
+                if (el.data.Left is not null || el.data.Right is not null)
+                {
+                    renderQueue.Enqueue(new PlayerRenderer(el.point, el.section, el.data, el.dir, el.shouldMirror));
+                }
+            }
 
             lock (drawingLock)
             {
-                Console.BackgroundColor = ConsoleColor.DarkCyan;
-                Console.ForegroundColor = ConsoleColor.White;
-                foreach (Section section in track.Sections)
-                {
-                    SectionType type = section.SectionType;
-                    SectionData data = race.GetSectionData(section);
-                    Bitmap? imageData = null;
-                    shouldMirror = false;
-
-                    int x = dir == EAST ? 1 : (dir == WEST ? -1 : 0);
-                    int y = dir == SOUTH ? 1 : (dir == NORTH ? -1 : 0);
-
-                    point.Offset(x, y);
-
-                    switch (type)
-                    {
-                        case Finish:
-                        {
-                            imageData = ImageManager.GetBitmapData(IsHorizontal(dir) ? finish_h : finish_v);
-                            break;
-                        }
-
-                        case StartGrid:
-                        {
-                            imageData = ImageManager.GetBitmapData(IsHorizontal(dir) ? startgrid_h : startgrid_v);
-                            break;
-                        }
-
-                        case Straight:
-                        {
-                            imageData = ImageManager.GetBitmapData(IsHorizontal(dir) ? straight_h : straight_v);
-                            if (dir == WEST || dir == NORTH)
-                            {
-                                shouldMirror = true;
-                            }
-                            break;
-                        }
-
-                        case LeftCorner:
-                        {
-                            Dictionary<Orientation, (Orientation, string)> orientationMappings = new()
-                            {
-                                { NORTH, (WEST, corner_SW) },
-                                { WEST, (SOUTH, corner_SE) },
-                                { SOUTH, (EAST, corner_NE) },
-                                { EAST, (NORTH, corner_NW) },
-                            };
-
-                            var result = orientationMappings[dir];
-
-                            dir = result.Item1;
-                            imageData = ImageManager.GetBitmapData(result.Item2);
-                            break;
-                        }
-
-                        case RightCorner:
-                        {
-                            Dictionary<Orientation, (Orientation, string)> orientationMappings = new()
-                            {
-                                { NORTH, (EAST, corner_SE) },
-                                { EAST, (SOUTH, corner_SW) },
-                                { SOUTH, (WEST, corner_NW) },
-                                { WEST, (NORTH, corner_NE) },
-                            };
-
-                            var result = orientationMappings[dir];
-
-                            dir = result.Item1;
-                            imageData = ImageManager.GetBitmapData(result.Item2);
-                            break;
-                        }
-
-                        default:
-                        {
-                            break;
-                        }
-                    }
-
-                    Point finalPos = new(point.X * ImageManager.IMAGE_SIZE, point.Y * ImageManager.IMAGE_SIZE);
-
-                    g.DrawImage(imageData, finalPos);
-                    if (data.Left is not null || data.Right is not null)
-                    {
-                        renderQueue.Enqueue(new PlayerRenderer(finalPos, section, data, dir, shouldMirror));
-                    }
-                }
-
                 while (renderQueue.Count > 0)
                 {
                     PlayerRenderer renderInfo = renderQueue.Dequeue();
 
+                    if (ImageManager.tunnelSections.Contains(renderInfo.section))
+                    {
+                        continue;
+                    }
+
                     int x = renderInfo.sectionPos.X;
                     int y = renderInfo.sectionPos.Y;
-                    bitmap.SetPixel(x, y, Color.Red);
 
-                    double ToRadians(double degrees)
-                    {
-                        return degrees * Math.PI / 180;
-                    }
-
-                    (int, int) Compute(int distance, bool left)
-                    {
-                        int offset = (int)(distance / (float)Section.sectionLength * ImageManager.IMAGE_SIZE);
-
-                        if (IsTurn(renderInfo.section.SectionType))
-                        {
-                            double angle =  ToRadians(offset / (double)ImageManager.IMAGE_SIZE * 90.0 + (double)renderInfo.dir - 180);
-                            
-                            double radius = left ? 100 : 20;
-
-                            int x_offset = (int)(Math.Sin(angle) * radius);
-                            int y_offset = (int)(Math.Cos(angle) * radius) * -1;
-
-                            x += x_offset - ImageManager.SKATER_SIZE / 2;
-                            y += y_offset - ImageManager.SKATER_SIZE / 2;
-
-                            Orientation dir = renderInfo.dir;
-                            if (renderInfo.section.SectionType == RightCorner)
-                            {
-                                switch (renderInfo.dir)
-                                {
-                                    case SOUTH:
-                                    {
-                                        y += ImageManager.IMAGE_SIZE;
-                                        break;
-                                    }
-
-                                    case NORTH:
-                                    {
-                                        x += ImageManager.IMAGE_SIZE;
-                                        break;
-                                    }
-
-                                    case EAST:
-                                    {
-                                        x += ImageManager.IMAGE_SIZE;
-                                        y += ImageManager.IMAGE_SIZE;
-                                        break;
-                                    }
-
-                                    default:
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                switch (renderInfo.dir)
-                                {
-                                    case WEST:
-                                    {
-                                        y += ImageManager.IMAGE_SIZE;
-                                        break;
-                                    }
-
-                                    case EAST:
-                                    {
-                                        x += ImageManager.IMAGE_SIZE;
-                                        break;
-                                    }
-
-                                    case SOUTH:
-                                    {
-                                        x += ImageManager.IMAGE_SIZE;
-                                        y += ImageManager.IMAGE_SIZE;
-                                        break;
-                                    }
-
-                                    default:
-                                    {
-                                        break;
-                                    }
-                                }
-                            }                            
-                        }
-                        else if (IsHorizontal(renderInfo.dir))
-                        {
-                            if (left)
-                            {
-                                y += ImageManager.HALF_IMAGE * (renderInfo.mirror ? 1 : 0);
-                            }
-                            else
-                            {
-                                y += ImageManager.HALF_IMAGE * (renderInfo.mirror ? 0 : 1);
-                            }
-
-                            if (renderInfo.mirror)
-                            {
-                                x += ImageManager.IMAGE_SIZE - distance;
-                            }
-                            else
-                            {
-                                x += offset;
-                            }
-                        }
-                        else
-                        {
-                            if (left)
-                            {
-                                x += (int)(ImageManager.HALF_IMAGE * 1.33334) * (renderInfo.mirror ? 0 : 1);
-                            }
-                            else
-                            {
-                                x += (int)(ImageManager.HALF_IMAGE * 1.33334) * (renderInfo.mirror ? 1 : 0);
-                            }
-
-                            if (renderInfo.mirror)
-                            {
-                                y += ImageManager.IMAGE_SIZE - distance;
-                            }
-                            else
-                            {
-                                y += offset;
-                            }
-                        }
-
-                        return (x, y);
-                    }
-
+                    (Bitmap? left, Bitmap? right) = GetSkaterBitmaps(renderInfo);
                     if (renderInfo.data.Left is not null)
                     {
-                        Bitmap skaterBitmap = ImageManager.GetBitmapData(string.Format(skater, renderInfo.data.Left.TeamColor.ToString().ToLower()));
-
-                        (x, y) = Compute(renderInfo.data.DistanceLeft, true);
+                        (x, y) = ComputePositionForInfo(renderInfo, leftSide: true);
                     
-                        g.DrawImage(skaterBitmap, x, y);
+                        g.DrawImage(left, x, y);
+                        if (renderInfo.data.Left.Equipment.IsBroken)
+                        {
+                            g.DrawImage(ImageManager.GetBitmapData(broken), x, y + ImageManager.HALF_SKATER);
+                        }
                     }
 
                     x = renderInfo.sectionPos.X;
@@ -310,21 +286,35 @@ namespace Grafische
 
                     if (renderInfo.data.Right is not null)
                     {
-                        Bitmap skaterBitmap = ImageManager.GetBitmapData(string.Format(skater, renderInfo.data.Right.TeamColor.ToString().ToLower()));
+                        (x, y) = ComputePositionForInfo(renderInfo, leftSide: false);
 
-                        (x, y) = Compute(renderInfo.data.DistanceRight, false);
-
-                        g.DrawImage(skaterBitmap, x, y);
+                        g.DrawImage(right, x, y);
+                        if (renderInfo.data.Right.Equipment.IsBroken)
+                        {
+                            g.DrawImage(ImageManager.GetBitmapData(broken), x, y + ImageManager.HALF_SKATER);
+                        }
                     }
                 }
-            }
 
-            return bitmap;
+                return bitmap;
+            }
         }
 
-        private static bool IsTurn(SectionType sectionType)
+        private static (Bitmap? left, Bitmap? right) GetSkaterBitmaps(PlayerRenderer renderInfo)
         {
-            return sectionType == LeftCorner || sectionType == RightCorner;
+            Bitmap? left = null;
+            if (renderInfo.data.Left is not null)
+            {
+                left = ImageManager.GetBitmapData(string.Format(skater, renderInfo.data.Left.TeamColor.ToString().ToLower()));
+            }
+
+            Bitmap? right = null;
+            if (renderInfo.data.Right is not null)
+            {
+                right = ImageManager.GetBitmapData(string.Format(skater, renderInfo.data.Right.TeamColor.ToString().ToLower()));
+            }
+
+            return (left, right);
         }
     }
 }

@@ -18,7 +18,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Grafische
 {
@@ -39,6 +38,11 @@ namespace Grafische
         {
             Console.WriteLine("Track has changed");
 
+            (int w, int h) = ImageManager.CalculateTrackPixelDimensions(Controller.Data.CurrentRace.Track);
+
+            ImageManager.trackWidth = w;
+            ImageManager.trackHeight = h;
+
             e.race.DriversChanged += Track_DriversChanged;
         }
 
@@ -46,7 +50,7 @@ namespace Grafische
         {
             RenderThread(() =>
             {
-                BitmapImage src = ImageManager.ToBitmapImage(Visualisation.DrawTrack(e.track, Data.CurrentRace));
+                BitmapSource src = ImageManager.ToBitmapSource(Visualisation.DrawTrack(e.track, Data.CurrentRace));
                 trackImage.Source = src;
             });
         }
