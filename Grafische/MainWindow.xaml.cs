@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -33,8 +35,10 @@ namespace Grafische
         public delegate void ToggleConsoleView(object? sender, EventArgs e);
         public static event ToggleConsoleView ToggleConsole;
 
-        private SchermA? schermA;
-        private SchermB? schermB;
+        private SchermA schermA;
+        private SchermB schermB;
+
+        private static object changingTrack = new();
 
         public MainWindow(ref bool done)
         {
@@ -42,6 +46,10 @@ namespace Grafische
             Closing += (sender, e) => WPFExit(sender, e);
 
             Data.RaceChanged += Track_RaceChanged;
+
+            schermA = new();
+            schermB = new();
+
             done = true;
         }
 
@@ -49,11 +57,16 @@ namespace Grafische
         {
             Console.WriteLine("Track has changed");
 
-            (int w, int h) = ImageManager.CalculateTrackPixelDimensions(Controller.Data.CurrentRace.Track);
+            lock (changingTrack)
+            {
+                (int w, int h) = ImageManager.CalculateTrackPixelDimensions(e.race.Track);
+                ImageManager.FlushCache();
 
-            ImageManager.trackWidth = w;
-            ImageManager.trackHeight = h;
-
+                ImageManager.trackWidth = w;
+                ImageManager.trackHeight = h;
+                
+                ImageManager.GetEmptyTrackBitmap(e.race.Track, e.race);
+            }
             e.race.DriversChanged += Track_DriversChanged;
         }
 
@@ -61,8 +74,11 @@ namespace Grafische
         {
             RenderThread(() =>
             {
-                BitmapSource src = ImageManager.ToBitmapSource(Visualisation.DrawTrack(e.track, Data.CurrentRace));
-                trackImage.Source = src;
+                lock (changingTrack)
+                {
+                    BitmapSource src = ImageManager.ToBitmapSource(Visualisation.DrawTrack(e.track, Data.CurrentRace));
+                    trackImage.Source = src;
+                }
             });
         }
 
@@ -86,28 +102,28 @@ namespace Grafische
             ToggleConsole?.Invoke(sender, e);
         }
 
-        private void SchermA_Open_Click(object sender, RoutedEventArgs e)
+        private void Toggle_SchermA_View(object sender, RoutedEventArgs e)
         {
-            if (schermA is not null)
+            if (schermA.IsVisible)
             {
-                schermA.Activate();
-                return;
+                schermA.Hide();
             }
-
-            schermA = new();
-            schermA.Show();
+            else
+            {
+                schermA.Show();
+            }
         }
 
-        private void SchermB_Open_Click(object sender, RoutedEventArgs e)
+        private void Toggle_SchermB_View(object sender, RoutedEventArgs e)
         {
-            if (schermB is not null)
+            if (schermB.IsVisible)
             {
-                schermB.Activate();
-                return;
+                schermB.Hide();
             }
-
-            schermB = new();
-            schermB.Show();
+            else
+            {
+                schermB.Show();
+            }
         }
     }
 }

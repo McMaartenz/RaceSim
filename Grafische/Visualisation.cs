@@ -95,7 +95,7 @@ namespace Grafische
 
         private record PlayerRenderer(Point sectionPos, Section section, SectionData data, Orientation dir, bool mirror) { }
 
-        public static object drawingLock = new();
+        public static object updateLock = new();
 
         public enum Orientation
         {
@@ -255,35 +255,39 @@ namespace Grafische
                 }
             }
 
-            lock (drawingLock)
+            while (renderQueue.Count > 0)
             {
-                while (renderQueue.Count > 0)
+                PlayerRenderer renderInfo = renderQueue.Dequeue();
+
+                if (ImageManager.tunnelSections.Contains(renderInfo.section))
                 {
-                    PlayerRenderer renderInfo = renderQueue.Dequeue();
+                    continue;
+                }
 
-                    if (ImageManager.tunnelSections.Contains(renderInfo.section))
-                    {
-                        continue;
-                    }
+                int x = renderInfo.sectionPos.X;
+                int y = renderInfo.sectionPos.Y;
 
-                    int x = renderInfo.sectionPos.X;
-                    int y = renderInfo.sectionPos.Y;
+                (Bitmap? left, Bitmap? right) = GetSkaterBitmaps(renderInfo);
 
-                    (Bitmap? left, Bitmap? right) = GetSkaterBitmaps(renderInfo);
+                lock (Race.updateLock)
+                {
                     if (renderInfo.data.Left is not null)
                     {
                         (x, y) = ComputePositionForInfo(renderInfo, leftSide: true);
-                    
+
                         g.DrawImage(left, x, y);
                         if (renderInfo.data.Left.Equipment.IsBroken)
                         {
                             g.DrawImage(ImageManager.GetBitmapData(broken), x, y + ImageManager.HALF_SKATER);
                         }
                     }
+                }
 
-                    x = renderInfo.sectionPos.X;
-                    y = renderInfo.sectionPos.Y;
+                x = renderInfo.sectionPos.X;
+                y = renderInfo.sectionPos.Y;
 
+                lock (Race.updateLock)
+                {
                     if (renderInfo.data.Right is not null)
                     {
                         (x, y) = ComputePositionForInfo(renderInfo, leftSide: false);
@@ -295,9 +299,9 @@ namespace Grafische
                         }
                     }
                 }
-
-                return bitmap;
             }
+
+            return bitmap;
         }
 
         private static (Bitmap? left, Bitmap? right) GetSkaterBitmaps(PlayerRenderer renderInfo)

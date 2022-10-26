@@ -22,10 +22,11 @@ namespace Controller
         
         public static void GenerateParticipants()
         {
-            List<IParticipant> participants = new(); // TODO: change speed to 100
+            List<IParticipant> participants = new(); // TODO: change speed to 200
             participants.Add(new Skater("Alpha", 0, new Skates(200, 125, 5, false), TeamColor.Red));
-            participants.Add(new Skater("Bravo", 0, new Skates(200, 125, 5, false), TeamColor.Blue));
-            participants.Add(new Skater("Charlie", 0, new Skates(200, 125, 5, false), TeamColor.Grey));
+            participants.Add(new Skater("Bravo", 0, new Skates(200, 125, 5, false), TeamColor.Green));
+            participants.Add(new Skater("Charlie", 0, new Skates(200, 125, 5, false), TeamColor.Blue));
+            participants.Add(new Skater("Delta", 0, new Skates(200, 125, 5, false), TeamColor.Yellow));
 
             Competition.Participants = participants;
         }
@@ -134,7 +135,7 @@ namespace Controller
             #endregion
 
             Queue<Track> tracks = new();
-            tracks.Enqueue(new Track("Izolirani", izoliraniSections));
+            //tracks.Enqueue(new Track("Izolirani", izoliraniSections));
             tracks.Enqueue(new Track("Zwolle", zwolleSections));
             tracks.Enqueue(new Track("Enschede", enschedeSections));
 

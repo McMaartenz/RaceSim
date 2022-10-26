@@ -20,6 +20,8 @@ namespace Controller
 
         private System.Timers.Timer timer;
 
+        public static object updateLock = new();
+
         public Track Track { get; set; }
         public List<IParticipant> Participants { get; set; }
         public DateTime StartTime { get; set; }
@@ -29,16 +31,21 @@ namespace Controller
 
         public Dictionary<Section, SectionData> Positions { get => _positions; set => _positions = value;  }
 
-        private Dictionary<IParticipant, int> Rounds { get; set; }
+        private Dictionary<IParticipant, int> _rounds;
+
+        public Dictionary<IParticipant, int> Rounds { get => _rounds; }
+
+        public Dictionary<IParticipant, DateTime> FinishTime;
 
         public Race(Track track, List<IParticipant> participants)
         {
             Track = track;
             Participants = participants;
+            FinishTime = new();
             timer = new(34); //TODO make 500
             timer.Elapsed += OnTimedEvent;
 
-            Rounds = new(participants.Count);
+            _rounds = new(participants.Count);
             _random = new(DateTime.UtcNow.Millisecond);
 
             _positions = new();
@@ -94,80 +101,122 @@ namespace Controller
 
                 if (sData.Left != null && !sData.Left.Equipment.IsBroken)
                 {
-                    sData.DistanceLeft += sData.Left.Equipment.GetSpeed();
-                    if (sData.DistanceLeft > Section.sectionLength)
+                    lock (updateLock)
                     {
-                        IParticipant participant = sData.Left;
-
-                        LinkedListNode<Section> next = Track.Sections.Find(section).Next ?? Track.Sections.First;
-                        Section nextSection = next.Value;
-                        SectionData nextSData = GetSectionData(nextSection);
-
-                        if (nextSData.Left == null)
+                        sData.DistanceLeft += sData.Left.Equipment.GetSpeed();
+                        if (sData.DistanceLeft > Section.sectionLength)
                         {
-                            nextSData.Left = participant;
+                            IParticipant participant = sData.Left;
+
+                            LinkedListNode<Section> next = Track.Sections.Find(section).Next ?? Track.Sections.First;
+                            Section nextSection = next.Value;
+                            SectionData nextSData = GetSectionData(nextSection);
+
+                            bool leftFree = nextSData.Left == null;
+                            bool rightFree = nextSData.Right == null;
+
+                            if (!leftFree && !rightFree)
+                            {
+                                sData.DistanceLeft = Section.sectionLength;
+                                continue;
+                            }
+
+                            if (leftFree)
+                            {
+                                nextSData.Left = participant;
+                            }
+                            else
+                            {
+                                nextSData.Right = participant;
+                            }
+
                             sData.Left = null;
                             sData.DistanceLeft = 0;
 
                             if (section.SectionType == SectionType.Finish)
                             {
-                                if (Rounds.ContainsKey(participant))
+                                if (_rounds.ContainsKey(participant))
                                 {
-                                    Rounds[participant]++;
-                                    if (Rounds[participant] >= requiredRounds)
+                                    _rounds[participant]++;
+                                    if (_rounds[participant] >= requiredRounds)
                                     {
-                                        nextSData.Left = null;
+                                        if (leftFree)
+                                        {
+                                            nextSData.Left = null;
+                                        }
+                                        else
+                                        {
+                                            nextSData.Right = null;
+                                        }
+                                        FinishTime.Add(participant, DateTime.Now);
                                     }
                                 }
                                 else
                                 {
-                                    Rounds.Add(participant, 0);
+                                    _rounds.Add(participant, 0);
                                 }
                             }
-                        }
-                        else
-                        {
-                            sData.DistanceLeft = Section.sectionLength;
                         }
                     }
                 }
 
                 if (sData.Right != null && !sData.Right.Equipment.IsBroken)
                 {
-                    sData.DistanceRight += sData.Right.Equipment.GetSpeed();
-                    if (sData.DistanceRight > Section.sectionLength)
+                    lock (updateLock)
                     {
-                        IParticipant participant = sData.Right;
-
-                        LinkedListNode<Section> next = Track.Sections.Find(section).Next ?? Track.Sections.First;
-                        Section nextSection = next.Value;
-                        SectionData nextSData = GetSectionData(nextSection);
-
-                        if (nextSData.Right == null)
+                        sData.DistanceRight += sData.Right.Equipment.GetSpeed();
+                        if (sData.DistanceRight > Section.sectionLength)
                         {
-                            nextSData.Right = participant;
+                            IParticipant participant = sData.Right;
+
+                            LinkedListNode<Section> next = Track.Sections.Find(section).Next ?? Track.Sections.First;
+                            Section nextSection = next.Value;
+                            SectionData nextSData = GetSectionData(nextSection);
+
+                            bool leftFree = nextSData.Left == null;
+                            bool rightFree = nextSData.Right == null;
+
+                            if (!leftFree && !rightFree)
+                            {
+                                sData.DistanceLeft = Section.sectionLength;
+                                continue;
+                            }
+
+                            if (leftFree)
+                            {
+                                nextSData.Left = participant;
+                            }
+                            else
+                            {
+                                nextSData.Right = participant;
+                            }
+
                             sData.Right = null;
                             sData.DistanceRight = 0;
 
                             if (section.SectionType == SectionType.Finish)
                             {
-                                if (Rounds.ContainsKey(participant))
+                                if (_rounds.ContainsKey(participant))
                                 {
-                                    Rounds[participant]++;
-                                    if (Rounds[participant] >= requiredRounds)
+                                    _rounds[participant]++;
+                                    if (_rounds[participant] >= requiredRounds)
                                     {
-                                        nextSData.Right = null;
+                                        if (leftFree)
+                                        {
+                                            nextSData.Left = null;
+                                        }
+                                        else
+                                        {
+                                            nextSData.Right = null;
+                                        }
+                                        FinishTime.Add(participant, DateTime.Now);
                                     }
                                 }
                                 else
                                 {
-                                    Rounds.Add(participant, 0);
+                                    _rounds.Add(participant, 0);
                                 }
                             }
-                        }
-                        else
-                        {
-                            sData.DistanceRight = Section.sectionLength;
                         }
                     }
                 }
@@ -179,7 +228,7 @@ namespace Controller
             bool everyoneDone = true;
             foreach (IParticipant participant in Participants)
             {
-                if (Rounds.TryGetValue(participant, out int rounds))
+                if (_rounds.TryGetValue(participant, out int rounds))
                 {
                     sb.Append($" {participant}: {rounds},");
                     if (rounds < requiredRounds)
@@ -191,7 +240,7 @@ namespace Controller
             
             Console.Title = sb.Remove(sb.Length - 1, 1).ToString();
         
-            if (everyoneDone && Participants.Count == Rounds.Count)
+            if (everyoneDone && Participants.Count == _rounds.Count)
             {
                 Data.NextRace();
             }

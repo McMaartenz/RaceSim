@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Grafische"
         xmlns:Controller="clr-namespace:Controller;assembly=Controller" x:Class="Grafische.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" Background="#FFC1C1C1">
     <Window.DataContext>
         <Controller:DataContext/>
     </Window.DataContext>
@@ -17,9 +17,9 @@
             <Menu Height="20" VerticalAlignment="Top" DockPanel.Dock="Top">
                 <MenuItem Header="Menu">
                     <MenuItem Header="Sluit af" Click="MenuItem_Exit_Click"/>
-                    <MenuItem Header="Hide/Show console" Click="Toggle_Console_View"/>
-                    <MenuItem Header="Scherm A" Click="SchermA_Open_Click"/>
-                    <MenuItem Header="Scherm B" Click="SchermB_Open_Click"/>
+                    <MenuItem Header="Hide/Show Console" Click="Toggle_Console_View"/>
+                    <MenuItem Header="Hide/Show Scherm A" Click="Toggle_SchermA_View"/>
+                    <MenuItem Header="Hide/Show Scherm B" Click="Toggle_SchermB_View"/>
                 </MenuItem>
             </Menu>
         </DockPanel>

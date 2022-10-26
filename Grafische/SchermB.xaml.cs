@@ -19,9 +19,14 @@ namespace Grafische
     /// </summary>
     public partial class SchermB : Window
     {
+        bool keepAlive = true;
+
         public SchermB()
         {
             InitializeComponent();
+
+            MainWindow.WPFExit += (sender, e) => { keepAlive = false; Close(); };
+            Closing += (sender, e) => { e.Cancel = keepAlive; Hide(); };
         }
     }
 }
