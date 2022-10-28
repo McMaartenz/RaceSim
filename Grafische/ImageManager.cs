@@ -28,6 +28,16 @@ namespace Grafische
         public static Dictionary<string, Bitmap> imageCache = new();
         public static List<Section> tunnelSections = new();
 
+        public static Rectangle GetSectionRectangle(System.Drawing.Point point)
+        {
+            return new Rectangle { Location = point, Width = IMAGE_SIZE, Height= IMAGE_SIZE };
+        }
+
+        public static Rectangle GetSkaterRectangle(int x, int y)
+        {
+            return new Rectangle { X = x, Y = y, Width = SKATER_SIZE, Height = SKATER_SIZE };
+        }
+
         public static double ToRadians(double degrees)
         {
             return degrees * Math.PI / 180;

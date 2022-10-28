@@ -35,8 +35,8 @@ namespace Grafische
         public delegate void ToggleConsoleView(object? sender, EventArgs e);
         public static event ToggleConsoleView ToggleConsole;
 
-        private SchermA schermA;
-        private SchermB schermB;
+        private CurrentRaceInfo windowCurrentRaceInfo;
+        private CompetitionInfo windowCompetitionInfo;
 
         private static object changingTrack = new();
 
@@ -47,8 +47,8 @@ namespace Grafische
 
             Data.RaceChanged += Track_RaceChanged;
 
-            schermA = new();
-            schermB = new();
+            windowCurrentRaceInfo = new();
+            windowCompetitionInfo = new();
 
             done = true;
         }
@@ -102,27 +102,27 @@ namespace Grafische
             ToggleConsole?.Invoke(sender, e);
         }
 
-        private void Toggle_SchermA_View(object sender, RoutedEventArgs e)
+        private void Toggle_CurrentRaceInfo_Click(object sender, RoutedEventArgs e)
         {
-            if (schermA.IsVisible)
+            if (windowCurrentRaceInfo.IsVisible)
             {
-                schermA.Hide();
+                windowCurrentRaceInfo.Hide();
             }
             else
             {
-                schermA.Show();
+                windowCurrentRaceInfo.Show();
             }
         }
 
-        private void Toggle_SchermB_View(object sender, RoutedEventArgs e)
+        private void Toggle_CompetitionInfo_Click(object sender, RoutedEventArgs e)
         {
-            if (schermB.IsVisible)
+            if (windowCompetitionInfo.IsVisible)
             {
-                schermB.Hide();
+                windowCompetitionInfo.Hide();
             }
             else
             {
-                schermB.Show();
+                windowCompetitionInfo.Show();
             }
         }
     }

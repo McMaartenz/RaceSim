@@ -15,13 +15,13 @@ using System.Windows.Shapes;
 namespace Grafische
 {
     /// <summary>
-    /// Interaction logic for SchermA.xaml
+    /// Interaction logic for SchermB.xaml
     /// </summary>
-    public partial class SchermA : Window
+    public partial class CompetitionInfo : Window
     {
         bool keepAlive = true;
 
-        public SchermA()
+        public CompetitionInfo()
         {
             InitializeComponent();
 

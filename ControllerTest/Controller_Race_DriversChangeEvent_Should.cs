@@ -65,7 +65,7 @@ namespace ControllerTest
                 race.OnTimedEvent(this, new());
             }
 
-            Assert.That(race.GetSectionData(track.Sections.First.Next.Next.Value).Right, Is.EqualTo(skaterA));
+            Assert.That(race.GetSectionData(track.Sections.First.Next.Next.Value).Left, Is.EqualTo(skaterA));
         }
     }
 }

@@ -1,0 +1,21 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Grafische"
+        xmlns:Controller="clr-namespace:Controller;assembly=Controller" x:Class="Grafische.CurrentRaceInfo"
+        mc:Ignorable="d"
+        Title="Current Race Info" Height="450" Width="800">
+    <Window.DataContext>
+        <Controller:DataContext/>
+    </Window.DataContext>
+    <Grid>
+        <Label Content="{Binding Participants}" HorizontalAlignment="Left" Margin="560,174,0,0" VerticalAlignment="Top" Height="250" Width="230"/>
+        <Label Content="Participants" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="390"/>
+        <DataGrid Margin="10,72,400,10" ItemsSource="{Binding Participants}"/>
+        <DataGrid ItemsSource="{Binding FinishedParticipants}" Margin="405,72,10,10"/>
+        <Label Content="Finished participants" HorizontalAlignment="Left" Margin="405,41,0,0" VerticalAlignment="Top" Width="385"/>
+        <Label x:Name="startCurrentRace" Content="{Binding StartTimeCurrentRace}" HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" Width="780"/>
+    </Grid>
+</Window>

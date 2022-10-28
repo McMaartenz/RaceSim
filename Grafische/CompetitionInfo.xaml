@@ -1,0 +1,19 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Grafische"
+        xmlns:Controller="clr-namespace:Controller;assembly=Controller" x:Class="Grafische.CompetitionInfo"
+        mc:Ignorable="d"
+        Title="Competition Info" Height="450" Width="800">
+    <Window.DataContext>
+        <Controller:DataContext/>
+    </Window.DataContext>
+    <Grid Margin="0,0,0,0">
+        <Label Content="Upcoming tracks list:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="200"/>
+        <DataGrid Margin="10,41,590,10" ItemsSource="{Binding UpcomingTracks}"/>
+        <DataGrid Margin="215,41,10,10" ItemsSource="{Binding ParticipantAndEquipmentInfo}" />
+        <Label Content="Participant &amp; equipment info:" HorizontalAlignment="Left" Margin="215,10,0,0" VerticalAlignment="Top" Width="575"/>
+    </Grid>
+</Window>

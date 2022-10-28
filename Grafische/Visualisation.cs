@@ -93,7 +93,7 @@ namespace Grafische
             public record TrackIteration(Section section, SectionType type, SectionData data, Point point, Orientation dir, bool shouldMirror) { }
         }
 
-        private record PlayerRenderer(Point sectionPos, Section section, SectionData data, Orientation dir, bool mirror) { }
+        public record PlayerRenderer(Point sectionPos, Section section, SectionData data, Orientation dir, bool mirror) { }
 
         public static object updateLock = new();
 
@@ -165,13 +165,13 @@ namespace Grafische
                 Point calculatedPosition = new(x: el.point.X * ImageManager.IMAGE_SIZE,
                                                y: el.point.Y * ImageManager.IMAGE_SIZE);
 
-                g.DrawImage(imageData, calculatedPosition);
+                g.DrawImage(imageData, new Rectangle {Location = calculatedPosition, Width=ImageManager.IMAGE_SIZE, Height=ImageManager.IMAGE_SIZE } );
             }
 
             return bitmap;
         }
 
-        private static (int x, int y) ComputePositionForInfo(PlayerRenderer renderInfo, bool leftSide)
+        public static (int x, int y) ComputePositionForInfo(PlayerRenderer renderInfo, bool leftSide)
         {
             int x = renderInfo.sectionPos.X * ImageManager.IMAGE_SIZE,
                 y = renderInfo.sectionPos.Y * ImageManager.IMAGE_SIZE;
@@ -275,10 +275,10 @@ namespace Grafische
                     {
                         (x, y) = ComputePositionForInfo(renderInfo, leftSide: true);
 
-                        g.DrawImage(left, x, y);
+                        g.DrawImage(left, ImageManager.GetSkaterRectangle(x, y));
                         if (renderInfo.data.Left.Equipment.IsBroken)
                         {
-                            g.DrawImage(ImageManager.GetBitmapData(broken), x, y + ImageManager.HALF_SKATER);
+                            g.DrawImage(ImageManager.GetBitmapData(broken), ImageManager.GetSkaterRectangle(x, y + ImageManager.HALF_SKATER));
                         }
                     }
                 }
@@ -292,10 +292,10 @@ namespace Grafische
                     {
                         (x, y) = ComputePositionForInfo(renderInfo, leftSide: false);
 
-                        g.DrawImage(right, x, y);
+                        g.DrawImage(right, ImageManager.GetSkaterRectangle(x, y));
                         if (renderInfo.data.Right.Equipment.IsBroken)
                         {
-                            g.DrawImage(ImageManager.GetBitmapData(broken), x, y + ImageManager.HALF_SKATER);
+                            g.DrawImage(ImageManager.GetBitmapData(broken), ImageManager.GetSkaterRectangle(x, y + ImageManager.HALF_SKATER));
                         }
                     }
                 }

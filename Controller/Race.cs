@@ -41,6 +41,7 @@ namespace Controller
         {
             Track = track;
             Participants = participants;
+            StartTime = DateTime.Now;
             FinishTime = new();
             timer = new(34); //TODO make 500
             timer.Elapsed += OnTimedEvent;
@@ -60,6 +61,11 @@ namespace Controller
         public void Start()
         {
             timer.Start();
+        }
+
+        public void UpdateStartTime()
+        {
+            StartTime = DateTime.Now;
         }
 
         public void RemoveEvents()

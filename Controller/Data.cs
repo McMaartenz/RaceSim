@@ -135,7 +135,7 @@ namespace Controller
             #endregion
 
             Queue<Track> tracks = new();
-            //tracks.Enqueue(new Track("Izolirani", izoliraniSections));
+            tracks.Enqueue(new Track("Izolirani", izoliraniSections));
             tracks.Enqueue(new Track("Zwolle", zwolleSections));
             tracks.Enqueue(new Track("Enschede", enschedeSections));
 
@@ -158,6 +158,7 @@ namespace Controller
                 CurrentRace?.RemoveEvents();
                 CurrentRace = new(nextTrack, Competition.Participants);
                 CurrentRace.SetStartingPositions();
+                CurrentRace.UpdateStartTime();
 
                 // send current race changed event
                 RaceChanged?.Invoke(default, new(CurrentRace));

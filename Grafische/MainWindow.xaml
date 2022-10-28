@@ -16,10 +16,10 @@
         <DockPanel LastChildFill="False" Margin="0,0,0,0">
             <Menu Height="20" VerticalAlignment="Top" DockPanel.Dock="Top">
                 <MenuItem Header="Menu">
-                    <MenuItem Header="Sluit af" Click="MenuItem_Exit_Click"/>
-                    <MenuItem Header="Hide/Show Console" Click="Toggle_Console_View"/>
-                    <MenuItem Header="Hide/Show Scherm A" Click="Toggle_SchermA_View"/>
-                    <MenuItem Header="Hide/Show Scherm B" Click="Toggle_SchermB_View"/>
+                    <MenuItem Header="Close Application" Click="MenuItem_Exit_Click"/>
+                    <MenuItem Header="Show/Hide Console" Click="Toggle_Console_View"/>
+                    <MenuItem Header="Show/Hide Display Current Race Info" Click="Toggle_CurrentRaceInfo_Click"/>
+                    <MenuItem Header="Show/Hide Display Competition Info" Click="Toggle_CompetitionInfo_Click"/>
                 </MenuItem>
             </Menu>
         </DockPanel>
