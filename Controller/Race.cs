@@ -43,7 +43,7 @@ namespace Controller
             Participants = participants;
             StartTime = DateTime.Now;
             FinishTime = new();
-            timer = new(34); //TODO make 500
+            timer = new(34);
             timer.Elapsed += OnTimedEvent;
 
             _rounds = new(participants.Count);

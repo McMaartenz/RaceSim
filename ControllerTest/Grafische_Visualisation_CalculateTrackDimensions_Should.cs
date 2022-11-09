@@ -84,16 +84,20 @@ namespace ControllerTest
                 RightCorner, // W 0 0
             });
 
-            race = new(track, new(){ new Skater("A", 0, null, TeamColor.Red), new Skater("B", 0, null, TeamColor.Blue) });
+            Skates skatesA = new(0, 0, 0, false), skatesB = new(0, 0, 0, false);
+            race = new(track, new(){ new Skater("A", 0, skatesA, TeamColor.Red), new Skater("B", 0, skatesB, TeamColor.Blue) });
+            Data.CurrentRace = race;
         }
 
         [Test]
         public void CalculateTrackDimensions_Width()
         {
             (int w, int h) = CalculateTrackDimensions(track);
-
-            Assert.That(w, Is.EqualTo(180));
-            Assert.That(h, Is.EqualTo(180));
+            Assert.Multiple(() =>
+            {
+                Assert.That(w, Is.EqualTo(11));
+                Assert.That(h, Is.EqualTo(9));
+            });
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Controller
         
         public static void GenerateParticipants()
         {
-            List<IParticipant> participants = new(); // TODO: change speed to 200
+            List<IParticipant> participants = new();
             participants.Add(new Skater("Alpha", 0, new Skates(200, 125, 5, false), TeamColor.Red));
             participants.Add(new Skater("Bravo", 0, new Skates(200, 125, 5, false), TeamColor.Green));
             participants.Add(new Skater("Charlie", 0, new Skates(200, 125, 5, false), TeamColor.Blue));
